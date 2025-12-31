@@ -29,12 +29,12 @@ class LeadResponse(BaseModel):
 class BrevoContactWebhook(BaseModel):
     """Brevo automation webhook payload with contact attributes."""
     
-    # Brevo metadata
+    # Brevo metadata (all optional for flexibility)
     appName: Optional[str] = Field(None, description="Brevo app name")
-    contact_id: int = Field(..., description="Brevo contact ID")
+    contact_id: Optional[int] = Field(None, description="Brevo contact ID")
     email: EmailStr = Field(..., description="Contact email address")
-    step_id: int = Field(..., description="Automation step ID")
-    workflow_id: int = Field(..., description="Automation workflow ID")
+    step_id: Optional[int] = Field(None, description="Automation step ID")
+    workflow_id: Optional[int] = Field(None, description="Automation workflow ID")
     
     # Contact attributes (nested in 'attributes' object)
     attributes: Dict[str, Any] = Field(..., description="Contact attributes")
@@ -43,15 +43,11 @@ class BrevoContactWebhook(BaseModel):
         populate_by_name = True
         json_schema_extra = {
             "example": {
-                "appName": "workflow-action-processor",
+                "email": "john@example.com",
                 "attributes": {
                     "FIRSTNAME": "John",
                     "MESSAGE": "Interested in BPO services"
-                },
-                "contact_id": 12345,
-                "email": "john@example.com",
-                "step_id": 13,
-                "workflow_id": 6
+                }
             }
         }
 
