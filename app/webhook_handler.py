@@ -12,7 +12,7 @@ class WebhookHandler:
     """Handler for processing Brevo webhook events."""
     
     def __init__(self):
-        self.webhook_secret = settings.webhook_secret
+        self.webhook_secret = settings.WEBHOOK_SECRET
     
     async def process_event(self, event: BrevoWebhookEvent) -> Dict[str, Any]:
         """

@@ -5,7 +5,7 @@ from app.routes import router
 
 # Initialize FastAPI app
 app = FastAPI(
-    title=settings.app_name,
+    title=settings.APP_NAME,
     description="A FastAPI service for BPO lead submissions with email notifications via Brevo SMTP",
     version="1.0.0",
     docs_url="/docs",
@@ -38,4 +38,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="localhost", port=8001, reload=settings.debug)
+    uvicorn.run("main:app", host="localhost", port=8001, reload=settings.DEBUG)

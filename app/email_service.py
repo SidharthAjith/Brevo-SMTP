@@ -17,11 +17,11 @@ class EmailService:
     def __init__(self):
         # Configure API key authorization
         configuration = sib_api_v3_sdk.Configuration()
-        configuration.api_key['api-key'] = settings.brevo_api_key
+        configuration.api_key['api-key'] = settings.BREVO_API_KEY
         
         self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
-        self.sender_email = settings.brevo_sender_email
-        self.sender_name = settings.brevo_sender_name
+        self.sender_email = settings.BREVO_SENDER_EMAIL
+        self.sender_name = settings.BREVO_SENDER_NAME
         self.recipient_emails = settings.get_recipient_list()
     
     async def send_lead_notification(self, lead: LeadRequest, firstname: str = None, lastname: str = None) -> dict:
