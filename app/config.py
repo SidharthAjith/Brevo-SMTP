@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     smtp_from_name: str = "BPO Acceptor"
     
     # Recipient
-    recipient_email: EmailStr
     
     # Webhook Security
     webhook_secret: Optional[str] = None

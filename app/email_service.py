@@ -22,7 +22,6 @@ class EmailService:
         self.smtp_password = settings.smtp_password
         self.from_email = settings.smtp_from_email
         self.from_name = settings.smtp_from_name
-        self.recipient_email = settings.recipient_email
     
     async def send_lead_notification(self, lead: LeadRequest) -> dict:
         """
@@ -60,13 +59,13 @@ class EmailService:
             message = MIMEMultipart("alternative")
             message["Subject"] = subject
             message["From"] = formataddr((self.from_name, self.from_email))
-            message["To"] = self.recipient_email
+            message["To"] = lead.email
             
             # Add HTML body
             message.attach(MIMEText(html_body, "html"))
             
             # Send email
-            logger.info(f"Sending lead notification to {self.recipient_email}")
+            logger.info(f"Sending lead notification to {lead.email}")
             
             async with aiosmtplib.SMTP(
                 hostname=self.smtp_host,

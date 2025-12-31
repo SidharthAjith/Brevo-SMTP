@@ -26,6 +26,34 @@ class LeadResponse(BaseModel):
     message: str
 
 
+class BrevoContactWebhook(BaseModel):
+    """Brevo automation webhook payload with contact attributes."""
+    
+    # Contact attributes sent by Brevo (capitalized)
+    EMAIL: EmailStr = Field(..., description="Contact email address")
+    FNAME: Optional[str] = Field(None, description="Contact first name")
+    NAME: Optional[str] = Field(None, description="Contact full name")
+    MESSAGE: str = Field(..., description="Contact message")
+    
+    # Optional Brevo metadata
+    contact_id: Optional[int] = Field(None, description="Brevo contact ID")
+    step_id: Optional[str] = Field(None, description="Automation step ID")
+    workflow_id: Optional[str] = Field(None, description="Automation workflow ID")
+    
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "EMAIL": "john@example.com",
+                "NAME": "John Doe",
+                "MESSAGE": "Interested in BPO services",
+                "contact_id": 12345,
+                "step_id": "step_abc",
+                "workflow_id": "workflow_xyz"
+            }
+        }
+
+
 class BrevoWebhookEvent(BaseModel):
     """Brevo webhook event model."""
     
