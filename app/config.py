@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import EmailStr
-from typing import Optional
+from typing import Optional, List
 
 
 class Settings(BaseSettings):
@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     smtp_from_email: EmailStr
     smtp_from_name: str = "BPO Acceptor"
     
-    # Recipient
+    # Recipients (comma-separated emails in env)
+    recipient_emails: str  # Will be parsed into list
     
     # Webhook Security
     webhook_secret: Optional[str] = None
@@ -26,6 +27,10 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+    
+    def get_recipient_list(self) -> List[str]:
+        """Parse comma-separated recipient emails into list."""
+        return [email.strip() for email in self.recipient_emails.split(",")]
 
 
 # Create a global settings instance
