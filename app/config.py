@@ -6,13 +6,10 @@ from typing import Optional, List
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    # SMTP Configuration
-    smtp_host: str = "smtp-relay.brevo.com"
-    smtp_port: int = 587
-    smtp_username: EmailStr
-    smtp_password: str
-    smtp_from_email: EmailStr
-    smtp_from_name: str = "BPO Acceptor"
+    # Brevo API Configuration
+    brevo_api_key: str
+    brevo_sender_email: EmailStr
+    brevo_sender_name: str = "BPO Acceptor"
     
     # Recipients (comma-separated emails in env)
     recipient_emails: str  # Will be parsed into list

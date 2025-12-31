@@ -1,7 +1,5 @@
-import aiosmtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formataddr
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 import logging
 from typing import List
 
@@ -14,20 +12,21 @@ logger = logging.getLogger(__name__)
 
 
 class EmailService:
-    """Service for sending emails via Brevo SMTP."""
+    """Service for sending emails via Brevo API using official SDK."""
     
     def __init__(self):
-        self.smtp_host = settings.smtp_host
-        self.smtp_port = settings.smtp_port
-        self.smtp_username = settings.smtp_username
-        self.smtp_password = settings.smtp_password
-        self.from_email = settings.smtp_from_email
-        self.from_name = settings.smtp_from_name
+        # Configure API key authorization
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key['api-key'] = settings.brevo_api_key
+        
+        self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+        self.sender_email = settings.brevo_sender_email
+        self.sender_name = settings.brevo_sender_name
         self.recipient_emails = settings.get_recipient_list()
     
     async def send_lead_notification(self, lead: LeadRequest, firstname: str = None, lastname: str = None) -> dict:
         """
-        Send lead notification email to multiple recipients.
+        Send lead notification email to multiple recipients using Brevo SDK.
         
         Args:
             lead: Lead information
@@ -38,13 +37,10 @@ class EmailService:
             dict: Response containing success status and message
         """
         try:
-            # Create email subject
-            subject = "New Contact Registration - BPO Acceptor"
-            
             # Use firstname if provided, otherwise use lead.name
             display_name = firstname if firstname else lead.name
             
-            # Create HTML email body matching the template
+            # Create HTML email body
             html_body = f"""
             <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -70,40 +66,38 @@ class EmailService:
             </html>
             """
             
-            # Create message
-            message = MIMEMultipart("alternative")
-            message["Subject"] = subject
-            message["From"] = formataddr((self.from_name, self.from_email))
-            message["To"] = ", ".join(self.recipient_emails)
+            # Prepare sender
+            sender = sib_api_v3_sdk.SendSmtpEmailSender(
+                name=self.sender_name,
+                email=self.sender_email
+            )
             
-            # Add HTML body
-            message.attach(MIMEText(html_body, "html"))
+            # Prepare recipients
+            to = [sib_api_v3_sdk.SendSmtpEmailTo(email=email) for email in self.recipient_emails]
+            
+            # Create email object
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                sender=sender,
+                to=to,
+                subject="New Contact Registration - BPO Acceptor",
+                html_content=html_body
+            )
             
             # Send email
-            logger.info(f"Sending lead notification to {len(self.recipient_emails)} recipients")
-            logger.info(f"Connecting to {self.smtp_host}:{self.smtp_port}")
+            logger.info(f"Sending lead notification to {len(self.recipient_emails)} recipients via Brevo SDK")
             
-            async with aiosmtplib.SMTP(
-                hostname=self.smtp_host,
-                port=self.smtp_port,
-                use_tls=False,
-                start_tls=True,
-                timeout=30  # 30 second timeout
-            ) as smtp:
-                logger.info("SMTP connection established, logging in...")
-                await smtp.login(self.smtp_username, self.smtp_password)
-                logger.info("Login successful, sending message...")
-                await smtp.send_message(message)
-                
-            logger.info("Lead notification sent successfully")
+            api_response = self.api_instance.send_transac_email(send_smtp_email)
+            
+            logger.info("Lead notification sent successfully via Brevo SDK")
+            logger.info(f"Brevo message ID: {api_response.message_id}")
             
             return {
                 "success": True,
                 "message": "Lead submitted successfully"
             }
             
-        except aiosmtplib.SMTPException as e:
-            logger.error(f"SMTP error: {str(e)}")
+        except ApiException as e:
+            logger.error(f"Brevo API error: {e}")
             return {
                 "success": False,
                 "message": f"Failed to send notification: {str(e)}"
