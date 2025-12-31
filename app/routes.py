@@ -1,0 +1,70 @@
+from fastapi import APIRouter, HTTPException, Request
+from app.models import LeadRequest, LeadResponse, BrevoWebhookEvent, WebhookResponse
+from app.email_service import email_service
+from app.webhook_handler import webhook_handler
+import logging
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+@router.post("/bpo-acceptor-lead", response_model=LeadResponse)
+async def submit_lead(lead: LeadRequest):
+    """
+    Submit a new BPO lead and send notification email.
+    
+    - **name**: Lead's full name (required)
+    - **email**: Lead's email address (required)
+    - **message**: Message from the lead (required)
+    """
+    result = await email_service.send_lead_notification(lead)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result["message"])
+    
+    return LeadResponse(**result)
+
+
+@router.post("/webhook/brevo", response_model=WebhookResponse)
+async def brevo_webhook(event: BrevoWebhookEvent, request: Request):
+    """
+    Receive and process webhook events from Brevo.
+    
+    This endpoint receives real-time notifications about email events:
+    - **delivered**: Email successfully delivered
+    - **opened**: Recipient opened the email
+    - **click**: Recipient clicked a link
+    - **soft_bounce**: Temporary delivery failure
+    - **hard_bounce**: Permanent delivery failure
+    - **spam**: Marked as spam
+    - **unsubscribed**: Recipient unsubscribed
+    - **error**: Processing error
+    
+    Configure this webhook URL in your Brevo dashboard:
+    Settings → Webhooks → Add webhook → Enter your domain/webhook/brevo
+    """
+    try:
+        logger.info(f"Received webhook event: {event.event} for {event.email}")
+        
+        # Process the event
+        result = await webhook_handler.process_event(event)
+        
+        return WebhookResponse(
+            success=True,
+            message=result.get("message", "Event processed"),
+            event_type=event.event
+        )
+    
+    except Exception as e:
+        logger.error(f"Error processing webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing webhook: {str(e)}")
+
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {
+        "status": "healthy",
+        "service": "BPO Acceptor Lead Service"
+    }
+
